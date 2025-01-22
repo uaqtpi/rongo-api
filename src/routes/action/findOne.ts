@@ -21,12 +21,12 @@ const headerSchema = z.object({
 	authorization: z
 		.string()
 		.startsWith("mongodb")
-		.regex(
+		/*.regex(
 			new RegExp(
 				"^(mongodb(?:\\+srv)?(\\:)(?:\\/{2}){1})(?:\\w+\\:\\w+\\@)?(\\w+?(?:\\.\\w+?)*)(\\:)(\\d+(?:\\/){0,1})(?:\\/\\w+?)?(?:\\?\\w+?\\=\\w+?(?:\\&\\w+?\\=\\w+?)*)?$",
 				"gm"
 			)
-		),
+		)*/
 });
 
 app.post(
@@ -36,21 +36,23 @@ app.post(
 
 	async (c) => {
 		let client;
+		let auth = c.req.header("authorization");
 		try {
+			if (auth !== process.env.MONGO_DB) {
+				return c.json({ success: false, message: "Invalid authorization header." }, 401);
+			}
 			client = await connectToClient(
-				c.req.header("authorization") as string
+				auth as string
 			);
 			const parsedBody = bodySchema.parse(await c.req.json());
-
 			const db = client.db(parsedBody.database);
 			const collection = db.collection(parsedBody.collection);
 			const result = await collection.findOne(parsedBody.filter, {
 				projection: parsedBody.projection,
 			});
-
 			await client.close();
 			return c.json({ document: result });
-		} catch {
+		} catch (error) {
 			if (client) {
 				await client.close();
 			}

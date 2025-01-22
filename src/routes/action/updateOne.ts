@@ -34,9 +34,13 @@ app.post(
 
 	async (c) => {
 		let client;
+		let auth = c.req.header("authorization");
 		try {
+			if (auth !== process.env.MONGO_DB) {
+				return c.json({ success: false, message: "Invalid authorization header." }, 401);
+			}
 			client = await connectToClient(
-				c.req.header("authorization") as string
+				auth as string
 			);
 			const parsedBody = bodySchema.parse(await c.req.json());
 

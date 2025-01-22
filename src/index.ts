@@ -26,6 +26,7 @@ serve({
 	port,
 });
 
+console.log(process.env.MONGO_DB);
 console.log(
 	`[RONGO] Server is running on port ${port}\nOpen http://localhost:${port} to view it in the browser.`
 );
